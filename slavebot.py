@@ -94,7 +94,7 @@ class SlaveBot(telepot.Bot):
 
             if not from_id in self.admin_id:
                 log.debug(" 권한 없는 사용자(%d)가 봇을 호출" % from_id)
-                if keyword[0] != "nslookup"
+                if keyword[0] != "nslookup":
                     self.sendMessage(chat_id,"저는 주인님의 명령만 듣습니다. 본인의 봇을 소환하세요. ")
                     return
                 else:
@@ -136,6 +136,22 @@ class SlaveBot(telepot.Bot):
 
                 result = self.get_search_list(' '.join(keyword[1:]))
                 self.set_menu(chat_id, from_id,result)
+
+            elif keyword[0] == "스샷":
+                from selenium import webdriver
+                today = datetime.datetime.now().strftime('%Y%m%d')
+                imageName = "./images/%s_%s.png" % (today, chat_id)
+
+                driver = webdriver.PhantomJS()
+                driver.set_window_size(1024, 768)
+                log.debug(keyword[1] + " => " + imageName)
+                driver.get(keyword[1])  # this works fine
+                driver.save_screenshot(imageName)
+                driver.quit()
+
+                fp = open(imageName, 'rb')
+                self.sendPhoto(chat_id,fp)
+
 
             else:
                 str = {"/셧다운- 모든 서버를 셧다운합니다.",

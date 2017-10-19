@@ -11,11 +11,14 @@ import sys
 from _ctypes import Array
 import datetime
 import re
+import socket
+import pyping
+
 
 #reload(sys)
 #sys.setdefaultencoding('utf-8')
 
-class SamPartBot(telepot.Bot):
+class SlaveBot(telepot.Bot):
     token=''
     admin_id=[]
     public_room=[]
@@ -28,9 +31,9 @@ class SamPartBot(telepot.Bot):
         self.stdin_path = '/dev/null'
         self.stdout_path = '/dev/tty'
         self.stderr_path = '/dev/tty'
-        self.pidfile_path =  '/var/run/gombot.pid'
+        self.pidfile_path =  '/var/run/slavebot.pid'
         self.pidfile_timeout = 5
-        super(SamPartBot, self).__init__(self.token)
+        super(SlaveBot, self).__init__(self.token)
         self._answerer = telepot.helper.Answerer(self)
 
     def run(self):
@@ -46,8 +49,7 @@ class SamPartBot(telepot.Bot):
                 sendkey = datetime.datetime.now().strftime('%m%d%H%M')
                 weekday = datetime.datetime.now().isoweekday()
                 print("weekday : %d" % weekday)
-                if nowtime == "08:30" and self.sended['news'] == 0: # 아침 08:30이고 공지한 적이 없으면
-                    data = self.redmine.search("news") #뉴스를 가져와서
+                if nowtime == "08:30" and self.sended['news'] == 0: # 아침 08:30이고 공지한 적이 없으면                    data = self.redmine.search("news") #뉴스를 가져와서
                     for item in data: #하나씩 돌려보면서
 
                         if item['title'][:5] == today: #같은 날짜가 있으면
@@ -102,6 +104,18 @@ class SamPartBot(telepot.Bot):
 
             elif keyword[0] == "하이":
                 self.sendMessage(chat_id,"반갑구만 반가워요")
+
+            elif keyword[0] == "nslookup":
+                self.sendMessage(chat_id,socket.gethostbyname(keyword[1]))
+
+            elif keyword[0] == "ping":
+                response = pyping.ping(keyword[1])
+
+                if response.ret_code == 0:
+                    str = "성공"
+                else:
+                    str = "실패"
+                self.sendMessage(chat_id,str)
 
             elif keyword[0] == "정보":
                 self.sendMessage(chat_id,"chat_id:%s\nfrom_id:%s"%(chat_id, from_id))
@@ -194,9 +208,9 @@ def loadConf():
     conf = json.loads(fp.read())
     fp.close()
 
-    SamPartBot.token = conf['telegram']['token']
-    SamPartBot.admin_id = conf['telegram']['admin_id']
-    SamPartBot.public_room = conf['telegram']['public_room']
+    SlaveBot.token = conf['telegram']['token']
+    SlaveBot.admin_id = conf['telegram']['admin_id']
+    SlaveBot.public_room = conf['telegram']['public_room']
     Redmine.url = conf['redmine']['url']
     Redmine.apiKey = conf['redmine']['api-key']
 
@@ -205,16 +219,16 @@ import time
 from daemon import runner # python-daemon2
 import logging.handlers
 #load configuration
-conf_file = 'sampart-settings.json'
+conf_file = 'slavebot-settings.json'
 loadConf()
 
-bot = SamPartBot()
+bot = SlaveBot()
 
-log = logging.getLogger("SamPartBot")
+log = logging.getLogger("SlaveBot")
 log.setLevel(logging.DEBUG)
 formatter = logging.Formatter("%(asctime)s %(name)s:%(levelname)s %(message)s (%(filename)s:%(lineno)s)",
                             datefmt='%Y-%m-%d %H:%M:%S')
-handler = logging.handlers.RotatingFileHandler("SamPartBot.log", maxBytes=10240, backupCount=1)
+handler = logging.handlers.RotatingFileHandler("SlaveBot.log", maxBytes=10240, backupCount=1)
 handler.setFormatter(formatter)
 handler2 = logging.StreamHandler()
 handler2.setFormatter(formatter)

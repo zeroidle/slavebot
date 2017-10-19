@@ -94,8 +94,11 @@ class SlaveBot(telepot.Bot):
 
             if not from_id in self.admin_id:
                 log.debug(" 권한 없는 사용자(%d)가 봇을 호출" % from_id)
-                self.sendMessage(chat_id,"저는 주인님의 명령만 듣습니다. 본인의 봇을 소환하세요. ")
-                return
+                if keyword[0] != "nslookup"
+                    self.sendMessage(chat_id,"저는 주인님의 명령만 듣습니다. 본인의 봇을 소환하세요. ")
+                    return
+                else:
+                    exit
 
             if keyword[0] == "셧다운":
                 log.debug(" 셧다운 시작 - %d" % from_id)
@@ -106,6 +109,7 @@ class SlaveBot(telepot.Bot):
 
             elif keyword[0] == "nslookup":
                 self.sendMessage(chat_id,keyword[1] + " : " + socket.gethostbyname(keyword[1]))
+
 
             elif keyword[0] == "정보":
                 self.sendMessage(chat_id,"chat_id:%s\nfrom_id:%s"%(chat_id, from_id))

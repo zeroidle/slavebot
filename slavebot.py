@@ -12,7 +12,6 @@ from _ctypes import Array
 import datetime
 import re
 import socket
-import pyping
 
 
 #reload(sys)
@@ -96,7 +95,7 @@ class SlaveBot(telepot.Bot):
             if not from_id in self.admin_id:
                 log.debug(" 권한 없는 사용자(%d)가 봇을 호출" % from_id)
                 self.sendMessage(chat_id,"저는 주인님의 명령만 듣습니다. 본인의 봇을 소환하세요. ")
-                exit
+                return
 
             if keyword[0] == "셧다운":
                 log.debug(" 셧다운 시작 - %d" % from_id)
@@ -106,16 +105,7 @@ class SlaveBot(telepot.Bot):
                 self.sendMessage(chat_id,"반갑구만 반가워요")
 
             elif keyword[0] == "nslookup":
-                self.sendMessage(chat_id,socket.gethostbyname(keyword[1]))
-
-            elif keyword[0] == "ping":
-                response = pyping.ping(keyword[1])
-
-                if response.ret_code == 0:
-                    str = "성공"
-                else:
-                    str = "실패"
-                self.sendMessage(chat_id,str)
+                self.sendMessage(chat_id,keyword[1] + " : " + socket.gethostbyname(keyword[1]))
 
             elif keyword[0] == "정보":
                 self.sendMessage(chat_id,"chat_id:%s\nfrom_id:%s"%(chat_id, from_id))

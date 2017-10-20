@@ -94,7 +94,7 @@ class SlaveBot(telepot.Bot):
 
             if not from_id in self.admin_id:
                 log.debug(" 권한 없는 사용자(%d)가 봇을 호출" % from_id)
-                if not keyword[0] in ["nslookup","스샷"]:
+                if not keyword[0] in ["nslookup","스샷","전달"]:
                     self.sendMessage(chat_id,"저는 주인님의 명령만 듣습니다. 본인의 봇을 소환하세요. ")
                     return
                 else:
@@ -153,7 +153,15 @@ class SlaveBot(telepot.Bot):
                 self.sendPhoto(chat_id,fp)
 
             elif keyword[0] == "전달":
-                self.sendMessage(keyword[1], " ".join(keyword[2:]))
+                # DC - 노가리, 데이터센터운영팀, 황토얼럿방
+                if keyword[1] == "노가리":
+                    chat_id = self.group_id[0]
+                elif keyword[1] == "공지방":
+                    chat_id = self.group_id[1]
+                else:
+                    chat_id = self.group_id[2]
+
+                self.sendMessage(chat_id, " ".join(keyword[2:]))
 
 
             else:
@@ -161,6 +169,7 @@ class SlaveBot(telepot.Bot):
                         "/검색 - 유범용님의 약점을 검색합니다."}
                 str = "\n".join(str)
                 self.sendMessage(chat_id,str)
+
 
         # inline query - need `/setinline`
         elif flavor == 'inline_query':
@@ -224,6 +233,7 @@ def loadConf():
     SlaveBot.token = conf['telegram']['token']
     SlaveBot.admin_id = conf['telegram']['admin_id']
     SlaveBot.public_room = conf['telegram']['public_room']
+    SlaveBot.group_id = conf['telegram']['group_id']
     Redmine.url = conf['redmine']['url']
     Redmine.apiKey = conf['redmine']['api-key']
 

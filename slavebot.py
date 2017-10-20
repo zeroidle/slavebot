@@ -94,7 +94,7 @@ class SlaveBot(telepot.Bot):
 
             if not from_id in self.admin_id:
                 log.debug(" 권한 없는 사용자(%d)가 봇을 호출" % from_id)
-                if keyword[0] != "nslookup":
+                if not keyword[0] in ["nslookup","스샷"]:
                     self.sendMessage(chat_id,"저는 주인님의 명령만 듣습니다. 본인의 봇을 소환하세요. ")
                     return
                 else:
@@ -139,7 +139,7 @@ class SlaveBot(telepot.Bot):
 
             elif keyword[0] == "스샷":
                 from selenium import webdriver
-                today = datetime.datetime.now().strftime('%Y%m%d')
+                today = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
                 imageName = "./images/%s_%s.png" % (today, chat_id)
 
                 driver = webdriver.PhantomJS()
@@ -151,6 +151,9 @@ class SlaveBot(telepot.Bot):
 
                 fp = open(imageName, 'rb')
                 self.sendPhoto(chat_id,fp)
+
+            elif keyword[0] == "전달":
+                self.sendMessage(keyword[1], " ".join(keyword[2:]))
 
 
             else:

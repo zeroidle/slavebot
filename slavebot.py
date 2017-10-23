@@ -48,7 +48,8 @@ class SlaveBot(telepot.Bot):
                 sendkey = datetime.datetime.now().strftime('%m%d%H%M')
                 weekday = datetime.datetime.now().isoweekday()
                 print("weekday : %d" % weekday)
-                if nowtime == "08:30" and self.sended['news'] == 0: # 아침 08:30이고 공지한 적이 없으면                    data = self.redmine.search("news") #뉴스를 가져와서
+                if nowtime == "08:30" and self.sended['news'] == 0: # 아침 08:30이고 공지한 적이 없으면
+                    data = self.redmine.search("news") #뉴스를 가져와서
                     for item in data: #하나씩 돌려보면서
 
                         if item['title'][:5] == today: #같은 날짜가 있으면

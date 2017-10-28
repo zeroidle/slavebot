@@ -12,7 +12,8 @@ from _ctypes import Array
 import datetime
 import re
 import socket
-
+import pytz
+from datetime import datetime, timezone
 
 #reload(sys)
 #sys.setdefaultencoding('utf-8')
@@ -36,37 +37,35 @@ class SlaveBot(telepot.Bot):
         self._answerer = telepot.helper.Answerer(self)
 
     def run(self):
-        self.redmine = Redmine()
+
+
         try:
             self.message_loop(self.handle)
             log.debug('Listening ...')
             self.sended['news']=0
             self.sended['weeklyreport']=0
-            while 1:
-                today = datetime.datetime.now().strftime('%m/%d')
-                nowtime = datetime.datetime.now().strftime('%H:%M')
-                sendkey = datetime.datetime.now().strftime('%m%d%H%M')
-                weekday = datetime.datetime.now().isoweekday()
-                print("weekday : %d" % weekday)
-                if nowtime == "08:30" and self.sended['news'] == 0: # 아침 08:30이고 공지한 적이 없으면
-                    data = self.redmine.search("news") #뉴스를 가져와서
-                    for item in data: #하나씩 돌려보면서
+            self.redmine = Redmine()
 
-                        if item['title'][:5] == today: #같은 날짜가 있으면
-                            if self.sended['news'] == 0:
-                                # 공지한적 없으면 제목을 띄움
-                                log.debug('오늘 뉴스 자동 공지')
-                                self.sendMessage(self.public_room,"<< %s 삼팟 늬우스>>\n" % today)
-                            self.sended['news'] = 1
-                            str = item['title'] + item['description']
-                            #self.sendMessage(152313050,"<< %s 삼팟 늬우스>>\n%s " % (today, str)) # 테스트방 (내꺼)
-                            cleanr = re.compile('<.*?>')
-                            cleantext = re.sub(cleanr, '', str)
-                            self.sendMessage(self.public_room, cleantext)
-                            print(today,cleantext)
+            while 1:
+                today = datetime.now().strftime('%m/%d')
+                nowtime = datetime.now().strftime('%H:%M')
+                sendkey = datetime.now().strftime('%m%d%H%M')
+                weekday = datetime.now().isoweekday()
+                print("weekday : %d" % weekday)
+
+                routine=0
+                if (nowtime == "08:30" and self.sended['news'] == 0) or routine ==1 : # 아침 08:30이고 공지한 적이 없으면
+                    data = self.redmine.getActivityFromMidnight()
+                    sendStr = "금일 불침번 활동내역\n"
+                    for item in data:
+                        sendStr = sendStr + "#%s %s [%s] %s\n" % (item['issue.id'], item['issue.author'], item['issue.project.name'], item['issue.subject'])
+
+                    self.sendMessage(self.public_room, sendStr)
+
                 elif nowtime=="00:00": # 알람 초기화
                     self.sended['news']=0
                     self.sended['weeklyreport']=0
+
                 elif weekday == 4 and nowtime == "15:00" and self.sended['weeklyreport'] == 0:
                     self.sended['weeklyreport'] = 1
                     self.sendMessage(self.public_room, "주간보고 작성!! http://goo.gl/eMKiw6")
@@ -192,7 +191,11 @@ class SlaveBot(telepot.Bot):
             print('Chosen Inline Result:', result_id, from_id, query_string)
 
 
+
 class Redmine():
+    from datetime import datetime, timezone
+    import pytz
+
     url = ""
     apiKey = ""
 
@@ -225,6 +228,38 @@ class Redmine():
             count = count + 1
 
         return arrData
+
+    def getActivityFromMidnight(self, startDateTime=datetime.utcnow()):
+        from redminelib import Redmine
+        import datetime
+
+        redmine = Redmine(url=self.url,key=self.apiKey)
+        baseTime = (startDateTime - datetime.timedelta(hours=10)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        issues = redmine.issue.filter(updated_on=">=%s" % baseTime)
+
+
+        count = 0
+        rtnArray = []
+
+        for issue in issues:
+            count = count + 1
+            tmpArray = {}
+
+            timezone = pytz.timezone("UTC")
+            utcDateTime = timezone.localize(issue.updated_on)
+            convertTime = utcDateTime.astimezone(pytz.timezone('Asia/Seoul')).strftime('%m-%d %H:%M')
+
+            tmpArray['issue.id'] = issue.id
+            tmpArray['issue.project.name'] = issue.project.name
+            tmpArray['issue.author'] = "%s" % issue.author
+            tmpArray['issue.subject'] = issue.subject
+
+
+            print("%d %s %s #%s %s %s" % (count, convertTime, issue.id, issue.project.name, issue.author, issue.author.id))
+            rtnArray.append(tmpArray)
+        return rtnArray
+
 
 def loadConf():
     fp = open(conf_file,'r')

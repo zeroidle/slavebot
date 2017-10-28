@@ -53,17 +53,10 @@ class SlaveBot(telepot.Bot):
                 weekday = datetime.now().isoweekday()
                 print("weekday : %d" % weekday)
 
-                routine=1
+                routine=0
                 if (nowtime == "08:30" and self.sended['news'] == 0) or routine ==1 : # 아침 08:30이고 공지한 적이 없으면
                     data = self.redmine.getActivityFromMidnight()
-                    sendStr = "<< 불침번 활동내역 >>\n"
-                    for item in data:
-                        sendStr = sendStr + "%s #%s %s [%s] %s\n" % (item['time'], item['issue.id'] , item['issue.author'], item['issue.project.name'], item['issue.subject'])
-
-                    if (routine ==1):
-                        print(sendStr)
-                    else:
-                        self.sendMessage(self.public_room, sendStr)
+                    self.alertNightWatch(data)
 
                 elif nowtime=="00:00": # 알람 초기화
                     self.sended['news']=0
@@ -77,6 +70,17 @@ class SlaveBot(telepot.Bot):
 
         except Exception as e:
             log.exception("Main loop error")
+
+    def alertNightWatch(self,data):
+        sendStr = "<< 불침번 활동내역 >>\n"
+        for item in data:
+            sendStr = sendStr + "%s #%s %s [%s] %s\n" % (
+            item['time'], item['issue.id'], item['issue.author'], item['issue.project.name'], item['issue.subject'])
+
+        if (routine == 1):
+            print(sendStr)
+        else:
+            self.sendMessage(self.public_room, sendStr)
 
     def handle(self, msg):
         flavor = 'normal'
@@ -154,6 +158,9 @@ class SlaveBot(telepot.Bot):
 
                 fp = open(imageName, 'rb')
                 self.sendPhoto(chat_id,fp)
+            elif keyword[0] == "불침번":
+                data = self.redmine.getActivityFromMidnight()
+                self.alertNightWatch(data)
 
             elif keyword[0] == "전달":
                 # DC - 노가리, 데이터센터운영팀, 황토얼럿방
@@ -233,7 +240,7 @@ class Redmine():
         return arrData
 
     def getActivityFromMidnight(self, startDateTime=datetime.utcnow()):
-        from redminelib import Redmine
+        from redmine import Redmine
         import datetime
 
         redmine = Redmine(url=self.url,key=self.apiKey)
@@ -265,6 +272,7 @@ class Redmine():
         from operator import itemgetter
         rtnArray = sorted(rtnArray, key=itemgetter('time'), reverse=False)
         return rtnArray
+
 
 
 def loadConf():

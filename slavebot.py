@@ -53,14 +53,17 @@ class SlaveBot(telepot.Bot):
                 weekday = datetime.now().isoweekday()
                 print("weekday : %d" % weekday)
 
-                routine=0
+                routine=1
                 if (nowtime == "08:30" and self.sended['news'] == 0) or routine ==1 : # 아침 08:30이고 공지한 적이 없으면
                     data = self.redmine.getActivityFromMidnight()
-                    sendStr = "금일 불침번 활동내역\n"
+                    sendStr = "<< 불침번 활동내역 >>\n"
                     for item in data:
-                        sendStr = sendStr + "#%s %s [%s] %s\n" % (item['issue.id'], item['issue.author'], item['issue.project.name'], item['issue.subject'])
+                        sendStr = sendStr + "%s #%s %s [%s] %s\n" % (item['time'], item['issue.id'] , item['issue.author'], item['issue.project.name'], item['issue.subject'])
 
-                    self.sendMessage(self.public_room, sendStr)
+                    if (routine ==1):
+                        print(sendStr)
+                    else:
+                        self.sendMessage(self.public_room, sendStr)
 
                 elif nowtime=="00:00": # 알람 초기화
                     self.sended['news']=0
@@ -248,8 +251,9 @@ class Redmine():
 
             timezone = pytz.timezone("UTC")
             utcDateTime = timezone.localize(issue.updated_on)
-            convertTime = utcDateTime.astimezone(pytz.timezone('Asia/Seoul')).strftime('%m-%d %H:%M')
+            convertTime = utcDateTime.astimezone(pytz.timezone('Asia/Seoul')).strftime('%H:%M')
 
+            tmpArray['time'] = convertTime
             tmpArray['issue.id'] = issue.id
             tmpArray['issue.project.name'] = issue.project.name
             tmpArray['issue.author'] = "%s" % issue.author
@@ -258,6 +262,8 @@ class Redmine():
 
             print("%d %s %s #%s %s %s" % (count, convertTime, issue.id, issue.project.name, issue.author, issue.author.id))
             rtnArray.append(tmpArray)
+        from operator import itemgetter
+        rtnArray = sorted(rtnArray, key=itemgetter('time'), reverse=False)
         return rtnArray
 
 

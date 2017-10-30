@@ -54,9 +54,10 @@ class SlaveBot(telepot.Bot):
                 print("weekday : %d" % weekday)
 
                 routine=0
-                if (nowtime == "08:30" and self.sended['news'] == 0) or routine ==1 : # 아침 08:30이고 공지한 적이 없으면
+                if (weekday < 6 and nowtime == "08:30" and self.sended['news'] == 0) or routine ==1 : # 아침 08:30이고 공지한 적이 없으면
                     data = self.redmine.getActivityFromMidnight()
                     self.alertNightWatch(data)
+                    self.sended['news']=1
 
                 elif nowtime=="00:00": # 알람 초기화
                     self.sended['news']=0
@@ -71,13 +72,13 @@ class SlaveBot(telepot.Bot):
         except Exception as e:
             log.exception("Main loop error")
 
-    def alertNightWatch(self,data):
+    def alertNightWatch(self,data,test=False):
         sendStr = "<< 불침번 활동내역 >>\n"
         for item in data:
             sendStr = sendStr + "%s #%s %s [%s] %s\n" % (
             item['time'], item['issue.id'], item['issue.author'], item['issue.project.name'], item['issue.subject'])
 
-        if (routine == 1):
+        if test:
             print(sendStr)
         else:
             self.sendMessage(self.public_room, sendStr)

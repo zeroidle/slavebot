@@ -55,7 +55,7 @@ class SlaveBot(telepot.Bot):
 
                 routine=0
                 if (weekday < 6 and nowtime == "08:30" and self.sended['news'] == 0) or routine ==1 : # 아침 08:30이고 공지한 적이 없으면
-                    data = self.redmine.getActivityFromMidnight()
+                    data = self.redmine.getActivitiesFromMidnight()
                     self.alertNightWatch(data)
                     self.sended['news']=1
 
@@ -160,7 +160,7 @@ class SlaveBot(telepot.Bot):
                 fp = open(imageName, 'rb')
                 self.sendPhoto(chat_id,fp)
             elif keyword[0] == "불침번":
-                data = self.redmine.getActivityFromMidnight()
+                data = self.redmine.getActivitiesFromMidnight()
                 self.alertNightWatch(data)
 
             elif keyword[0] == "전달":
@@ -240,13 +240,14 @@ class Redmine():
 
         return arrData
 
-    def getActivityFromMidnight(self, startDateTime=datetime.utcnow()):
-        from redmine import Redmine
+    def getActivitiesFromMidnight(self):
+        from redminelib import Redmine
         import datetime
 
         redmine = Redmine(url=self.url,key=self.apiKey)
+        startDateTime = datetime.datetime.utcnow()
         baseTime = (startDateTime - datetime.timedelta(hours=10)).strftime('%Y-%m-%dT%H:%M:%SZ')
-
+        print ("%s %s" % (startDateTime, baseTime))
         issues = redmine.issue.filter(updated_on=">=%s" % baseTime)
 
 
